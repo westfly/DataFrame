@@ -36,13 +36,16 @@ namespace hmdf
 
 template<typename T>
 HeteroPtrView::HeteroPtrView(T *begin_ptr, T *end_ptr)
-    : clear_function_([](HeteroPtrView &hv) { views_<T>.erase(&hv); }),
+    : clear_function_([](HeteroPtrView &hv) { get_storage_map<T>().erase(&hv); }),
       copy_function_([](const HeteroPtrView &from, HeteroPtrView &to)  {
-              views_<T>[&to] = views_<T>[&from]; }),
+            auto& map_views = get_storage_map<T>();
+            map_views[&to] = map_views[&from]; }),
       move_function_([](HeteroPtrView &from, HeteroPtrView &to)  {
-              views_<T>[&to] = std::move(views_<T>[&from]); })  {
+            auto& map_views = get_storage_map<T>();
+            map_views[&to] = std::move(map_views[&from]); })  {
 
-    views_<T>.emplace(this, VectorPtrView<T>(begin_ptr, end_ptr));
+    auto& map_views = get_storage_map<T>();
+    map_views.emplace(this, VectorPtrView<T>(begin_ptr, end_ptr));
 }
 
 // ----------------------------------------------------------------------------
@@ -50,44 +53,51 @@ HeteroPtrView::HeteroPtrView(T *begin_ptr, T *end_ptr)
 template<typename T>
 void HeteroPtrView::set_begin_end_special(T *bp, T *ep_1)  {
 
-    clear_function_ = [](HeteroPtrView &hv) { views_<T>.erase(&hv); };
-    copy_function_  = [](const HeteroPtrView &from, HeteroPtrView &to)  {
-                          views_<T>[&to] = views_<T>[&from];
+    auto& map_views = get_storage_map<T>();
+    clear_function_ = [&map_views](HeteroPtrView &hv) { get_storage_map<T>().erase(&hv); };
+    copy_function_  = [&map_views](const HeteroPtrView &from, HeteroPtrView &to)  {
+                          map_views[&to] = map_views[&from];
                       };
-    move_function_ = [](HeteroPtrView &from, HeteroPtrView &to)  {
-                         views_<T>[&to] = std::move(views_<T>[&from]);
+    move_function_ = [&map_views](HeteroPtrView &from, HeteroPtrView &to)  {
+                         map_views[&to] = std::move(map_views[&from]);
                      };
 
     VectorPtrView<T>    vv;
 
     vv.set_begin_end_special(bp, ep_1);
-    views_<T>.emplace(this, vv);
+    map_views.emplace(this, vv);
 }
 
 // ----------------------------------------------------------------------------
 
 template<typename T>
 HeteroPtrView::HeteroPtrView(VectorPtrView<T> &vec)
-    : clear_function_([](HeteroPtrView &hv) { views_<T>.erase(&hv); }),
+    : clear_function_([](HeteroPtrView &hv) { get_storage_map<T>().erase(&hv); }),
       copy_function_([](const HeteroPtrView &from, HeteroPtrView &to)  {
-              views_<T>[&to] = views_<T>[&from]; }),
+              auto& map_views = get_storage_map<T>();
+              map_views[&to] = map_views[&from]; }),
       move_function_([](HeteroPtrView &from, HeteroPtrView &to)  {
-              views_<T>[&to] = std::move(views_<T>[&from]); })  {
+              auto& map_views = get_storage_map<T>();
+              map_views[&to] = std::move(map_views[&from]); })  {
 
-    views_<T>.emplace(this, vec);
+    auto& map_views = get_storage_map<T>();
+    map_views.emplace(this, vec);
 }
 
 // ----------------------------------------------------------------------------
 
 template<typename T>
 HeteroPtrView::HeteroPtrView(VectorPtrView<T> &&vec)
-    : clear_function_([](HeteroPtrView &hv) { views_<T>.erase(&hv); }),
+    : clear_function_([](HeteroPtrView &hv) { get_storage_map<T>().erase(&hv); }),
       copy_function_([](const HeteroPtrView &from, HeteroPtrView &to)  {
-              views_<T>[&to] = views_<T>[&from]; }),
+              auto& map_views = get_storage_map<T>();
+              map_views[&to] = map_views[&from]; }),
       move_function_([](HeteroPtrView &from, HeteroPtrView &to)  {
-              views_<T>[&to] = std::move(views_<T>[&from]); })  {
+              auto& map_views = get_storage_map<T>();
+              map_views[&to] = std::move(map_views[&from]); })  {
 
-    views_<T>.emplace(this, std::move(vec));
+    auto& map_views = get_storage_map<T>();
+    map_views.emplace(this, std::move(vec));
 }
 
 // ----------------------------------------------------------------------------
@@ -95,9 +105,10 @@ HeteroPtrView::HeteroPtrView(VectorPtrView<T> &&vec)
 template<typename T>
 VectorPtrView<T> &HeteroPtrView::get_vector()  {
 
-    auto    iter = views_<T>.find (this);
+    auto& map_views = get_storage_map<T>();
+    auto    iter = map_views.find (this);
 
-    if (iter == views_<T>.end())
+    if (iter == map_views.end())
         throw std::runtime_error("HeteroPtrView::get_vector(): ERROR: "
                                  "Cannot find view");
 
@@ -117,9 +128,10 @@ const VectorPtrView<T> &HeteroPtrView::get_vector() const  {
 template<typename T, typename U>
 void HeteroPtrView::visit_impl_help_ (T &visitor)  {
 
-    auto    iter = views_<U>.find (this);
+    auto& map_views = get_storage_map<U>();
+    auto    iter = map_views.find (this);
 
-    if (iter != views_<U>.end())  {
+    if (iter != map_views.end())  {
 #ifndef _MSC_VER
         for (auto &&element : iter->second)
             visitor(element);
@@ -137,9 +149,10 @@ void HeteroPtrView::visit_impl_help_ (T &visitor)  {
 template<typename T, typename U>
 void HeteroPtrView::visit_impl_help_ (T &visitor) const  {
 
-    const auto  citer = views_<U>.find (this);
+    const auto& map_views = get_storage_map<U>();
+    auto    citer = map_views.find (this);
 
-    if (citer != views_<U>.end())  {
+    if (citer != map_views.end())  {
 #ifndef _MSC_VER
         for (auto &&element : citer->second)
             visitor(element);
@@ -157,9 +170,10 @@ void HeteroPtrView::visit_impl_help_ (T &visitor) const  {
 template<typename T, typename U>
 void HeteroPtrView::sort_impl_help_ (T &functor)  {
 
-    auto    iter = views_<U>.find (this);
+    auto& map_views = get_storage_map<U>();
+    auto    iter = map_views.find (this);
 
-    if (iter != views_<U>.end())
+    if (iter != map_views.end())
         std::sort (iter->second.begin(), iter->second.end(), functor);
 }
 
@@ -168,9 +182,10 @@ void HeteroPtrView::sort_impl_help_ (T &functor)  {
 template<typename T, typename U>
 void HeteroPtrView::change_impl_help_ (T &functor)  {
 
-    auto    iter = views_<U>.find (this);
+    auto& map_views = get_storage_map<U>();
+    auto    iter = map_views.find (this);
 
-    if (iter != views_<U>.end())
+    if (iter != map_views.end())
         functor(iter->second);
 }
 
@@ -179,9 +194,10 @@ void HeteroPtrView::change_impl_help_ (T &functor)  {
 template<typename T, typename U>
 void HeteroPtrView::change_impl_help_ (T &functor) const  {
 
-    const auto  citer = views_<U>.find (this);
+    const auto& map_views = get_storage_map<U>();
+    const auto  citer = map_views.find (this);
 
-    if (citer != views_<U>.end())
+    if (citer != map_views.end())
         functor(citer->second);
 }
 

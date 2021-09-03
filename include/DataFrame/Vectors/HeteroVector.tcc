@@ -38,7 +38,7 @@ namespace hmdf
 template<typename T>
 std::vector<T> &HeteroVector::get_vector()  {
 
-    auto&   map_vectors = get_thread_local_map<T>();
+    auto&   map_vectors = get_storage_map<T>();
     auto    iter = map_vectors.find (this);
 
     // don't have it yet, so create functions for copying and destroying
@@ -120,7 +120,7 @@ void HeteroVector::emplace (ITR pos, Args &&... args)  {
 
 template<typename T, typename U>
 void HeteroVector::visit_impl_help_ (T &visitor)  {
-    auto&   map_vectors = get_thread_local_map<U>();
+    auto&   map_vectors = get_storage_map<U>();
     auto    iter = map_vectors.find (this);
 
     if (iter != map_vectors.end())
@@ -133,7 +133,7 @@ void HeteroVector::visit_impl_help_ (T &visitor)  {
 template<typename T, typename U>
 void HeteroVector::visit_impl_help_ (T &visitor) const  {
 
-    const auto& map_vectors = get_thread_local_map<U>();
+    const auto& map_vectors = get_storage_map<U>();
     const auto  citer = map_vectors.find (this);
 
     if (citer != map_vectors.end())
@@ -146,7 +146,7 @@ void HeteroVector::visit_impl_help_ (T &visitor) const  {
 template<typename T, typename U>
 void HeteroVector::sort_impl_help_ (T &functor)  {
 
-    auto&   map_vectors = get_thread_local_map<U>();
+    auto&   map_vectors = get_storage_map<U>();
     auto    iter = map_vectors.find (this);
 
     if (iter != map_vectors.end())
@@ -158,7 +158,7 @@ void HeteroVector::sort_impl_help_ (T &functor)  {
 template<typename T, typename U>
 void HeteroVector::change_impl_help_ (T &functor)  {
 
-    auto&   map_vectors = get_thread_local_map<U>();
+    auto&   map_vectors = get_storage_map<U>();
     auto    iter = map_vectors.find (this);
 
     if (iter != map_vectors.end())
@@ -170,7 +170,7 @@ void HeteroVector::change_impl_help_ (T &functor)  {
 template<typename T, typename U>
 void HeteroVector::change_impl_help_ (T &functor) const  {
 
-    const auto& map_vectors = get_thread_local_map<U>();
+    const auto& map_vectors = get_storage_map<U>();
     const auto  citer = map_vectors.find (this);
 
     if (citer != map_vectors.end())

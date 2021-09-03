@@ -159,11 +159,21 @@ struct  HeteroView  {
     }
 
 private:
-
+#ifdef USE_THREAD_LOCAL_MEMORY
+    template<typename T>
+    static auto& get_storage_map() {
+        static thread_local std::unordered_map<const HeteroView*, VectorView<T>> thread_local_vector;
+        return thread_local_vector;
+    }
+#else
     template<typename T>
     inline static
     std::unordered_map<const HeteroView *, VectorView<T>>   views_ {  };
-
+    template<typename T>
+    static auto& get_storage_map() {
+        return views_<T>;
+    }
+#endif
     std::function<void(HeteroView &)>   clear_function_ {
         [](HeteroView &) { return; }
     };

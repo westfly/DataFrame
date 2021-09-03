@@ -138,11 +138,22 @@ struct LIBRARY_API  HeteroPtrView {
     }
 
 private:
-
+#ifdef USE_THREAD_LOCAL_MEMORY
+    template<typename T>
+    static auto& get_storage_map() {
+        static thread_local std::unordered_map<const HeteroPtrView*, VectorPtrView<T>> thread_local_vector;
+        return thread_local_vector;
+    }
+#else
     template<typename T>
     inline static std::unordered_map<const HeteroPtrView *, VectorPtrView<T>>
         views_ {  };
 
+    template<typename T>
+    static auto& get_storage_map() {
+        return views_<T>;
+    }
+#endif
     std::function<void(HeteroPtrView &)>
         clear_function_ {
             [](HeteroPtrView &) { return; }
