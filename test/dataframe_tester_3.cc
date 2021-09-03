@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cassert>
 #include <iostream>
 #include <string>
+#include <thread>
 
 using namespace hmdf;
 
@@ -46,7 +47,6 @@ using MyDataFrame = StdDataFrame<unsigned long>;
 static void test_groupby_edge()  {
 
     std::cout << "\nTesting groupby( ) ..." << std::endl;
-
     MyDataFrame                df;
     std::vector<unsigned long>  idxvec =
         { 1UL, 2UL, 3UL, 10UL, 5UL, 7UL, 8UL, 12UL, 9UL, 12UL, 10UL, 13UL,
@@ -61,11 +61,13 @@ static void test_groupby_edge()  {
     std::vector<std::string>    strvec =
         { "zz", "bb", "cc", "ww", "ee", "ff", "gg", "hh", "ii", "jj", "kk",
           "ll", "mm", "nn", "oo" };
+#if 0
     dblvec2.resize(1);
     dblvec.resize(1);
     strvec.resize(1);
     intvec.resize(1);
     idxvec.resize(1); // make this greater then one to fix coredump with hack
+#endif
     df.load_data(std::move(idxvec),
                  std::make_pair("dbl_col", dblvec),
                  std::make_pair("dbl_col_2", dblvec2),

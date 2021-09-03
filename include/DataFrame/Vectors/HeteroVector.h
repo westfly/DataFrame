@@ -193,11 +193,11 @@ struct  HeteroVector  {
     }
 
 private:
-
     template<typename T>
-    inline static std::unordered_map<const HeteroVector *, std::vector<T>>
-        vectors_ {  };
-
+    auto& get_thread_local_map () const {
+        static thread_local std::unordered_map<const HeteroVector *, std::vector<T>> thread_local_vector;
+        return thread_local_vector;
+    }
     std::vector<std::function<void(HeteroVector &)>>    clear_functions_;
     std::vector<std::function<void(const HeteroVector &,
                                    HeteroVector &)>>    copy_functions_;
